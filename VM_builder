@@ -1,0 +1,23 @@
+$PODServerName = Read-Host "Enter the name of the server you want to build"  
+$PODServerIP   = Read-Host "Enter the IP of the server you want to build"  
+$PODCPus       = Read-Host "Enter number of CPUs"
+$PODmemory     = Read-Host "Enter amount of memory" 
+$PODpagefile   = Read-Host "Enter size of pagefile volume" 
+
+#Parameters for the OS config.  
+Get-OSCustomizationSpec devqa | Get-OSCustomizationNicMapping | Set-OSCustomizationNicMapping -IpMode UseStaticIP -IpAddress $PODServerIP `
+                                                                                              -SubnetMask 255.255.240.0 `
+                                                                                              -DefaultGateway 100.86.31.254 `
+                                                                                              -Dns 100.86.50.31,100.86.50.32
+
+#Builds VM and attaches to domain.  Doublecheck all of your parameters before executing.  
+New-VM -Name $PODServerName -Template P11TMPL-2019GUI -Datastore DES_Q12_SQLA_OS_03 -VMHost despdevesx052.freshbeginnings.corp -NetworkName vlan_831 -OSCustomizationSpec devqa -Verbose
+Start-Sleep -Seconds 10 | Stop-VM $PODServerName
+Set-VM $PODServerName -NumCpu $PODCPus -MemoryGB $PODmemory
+New-HardDisk -VM $PODServerName -CapacityGB $PODpagefile -Datastore DES_Q12_SQLA_OS_03
+Start-Sleep -Seconds 10 | Start-VM $PODServerName
+
+
+#(Get-VM q12sql037c_test).guest.IPAddress 
+
+
